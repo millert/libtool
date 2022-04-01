@@ -63,7 +63,15 @@ int main() { return a1() + a2() + a3() + c(); }
   AT_CHECK([$CC $CFLAGS -c b.c],[0],[ignore],[ignore])
   AT_CHECK([$LIBTOOL --mode=link $CC $CFLAGS $LDFLAGS -o b$EXEEXT b.$OBJEXT ../liba1.la ../liba2.la ../liba3.la ../../c/libcee.la -rpath /nowhere],
 	   [0],[stdout],[ignore])
-  AT_CHECK([$EGREP 'cee.*cee' stdout], 1, [ignore], [ignore])
+  eval `$LIBTOOL --config | $EGREP '^fix_hardcoded_libdir_flag_spec=' | $SED -e 's/\\+/\\\\+/g'`
+  readstdout="cat stdout"
+  if test -n "${fix_hardcoded_libdir_flag_spec}"; then
+    linkdir='[[^ ]]*'
+    libdir='[[^ ]]*'
+    dlname='[[^ ]]*'
+    eval "readstdout=\"\${SED} -e 's#${fix_hardcoded_libdir_flag_spec}##g' stdout\""
+  fi
+  AT_CHECK([eval $readstdout | $EGREP 'cee.*cee'], 1, [ignore], [ignore])
   AT_XFAIL_IF([dnl
     eval `$LIBTOOL --config | $EGREP '^hardcode_(direct|direct_absolute|action)='`
     case $hardcode_action,$hardcode_direct,$hardcode_direct_absolute in
